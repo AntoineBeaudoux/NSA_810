@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  create_frontend_container:
+    container_name: frontend_container
+    build: 
+      context: .
+    image: image_docker_frontend
+    ports:
+      - 8080:80
