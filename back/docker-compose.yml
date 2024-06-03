@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  create_back_container:
+    container_name: backend_container
+    build: 
+      context: .
+    image: image_docker_backend
+    ports:
+      - 3000:3000
