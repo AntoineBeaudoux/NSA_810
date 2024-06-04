@@ -1,10 +1,36 @@
 version: '3'
 
 services:
+  create_bdd_container:
+    container_name: container_mysql
+    image: mysql:latest
+    environment:
+      MYSQL_DATABASE: 'cia_project'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'password'
+    ports:
+      - 3306:3306
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - backend
+
   create_back_container:
+    depends_on:
+      - create_bdd_container
     container_name: backend_container
     build: 
       context: .
     image: image_docker_backend
     ports:
       - 3000:3000
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  db_data:
