@@ -1,6 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import * as bcrypt from 'bcryptjs';
 
 import { CreateUserDto } from './dto/create-user.dto';
@@ -14,12 +15,6 @@ export class UsersServices {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
   ) {}
-
-  // PRIVATE FUNCTIONS
-
-  private isUserData(obj: any): obj is User {
-    return obj instanceof User && typeof obj.id === 'string' && typeof obj.username === 'string' && typeof obj.password === 'string' && typeof obj.role === 'string' && obj.auth instanceof Auth;
-  }
 
   // PUBLIC FUNCTIONS
 

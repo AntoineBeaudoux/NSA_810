@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Param, Delete, Res, Req, HttpStatus, HttpException } from '@nestjs/common';
 import { Response, Request } from 'express';
+import * as bcrypt from 'bcryptjs';
 
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { RegisterAuthDto } from './dto/register-auth.dto';
@@ -22,7 +23,7 @@ export class AuthController {
     const userExisting: User = await this.usersServices.findOne(loginAuthDto.username);
 
     if (!userExisting) {
-      throw new HttpException('User not found.', HttpStatus.NOT_FOUND);
+      throw new HttpException('Invalid credentials.', HttpStatus.NOT_FOUND);
     }
 
     if (this.authServices.isLogged(userExisting.auth) === true) {
@@ -30,6 +31,12 @@ export class AuthController {
         message: "The user is already logged"
       });
     }
+
+    const isPasswordValid = await this.authServices.comparePasswords(loginAuthDto.password, userExisting.password);
+    if (!isPasswordValid) {
+      throw new HttpException('Invalid credentials.', HttpStatus.UNAUTHORIZED);
+    }
+
     const auth = await this.authServices.login(userExisting.id, userExisting.auth.id);
     userExisting.auth = auth;
     await this.usersServices.update(userExisting.id, { auth });

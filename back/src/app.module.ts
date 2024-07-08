@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { configDatabase } from './db/config/config.bd';
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { Models } from "src/db/models.db";
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+
+import { AppService } from './app.service';
+import { configDatabase } from './db/config/config.bd';
+import { Models } from "src/db/models.db";
+
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { ConfigModule } from '@nestjs/config';
     UsersModule,
     AuthModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [AppService],
 })
 export class AppModule {}

@@ -1,14 +1,14 @@
-import { Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm';
 import { Request } from 'express';
+import * as bcrypt from 'bcryptjs';
 
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto'
 import { Auth } from './entities/auth.entity';
 import { User } from '../users/entities/user.entity'
 import { jwtTokenServices } from './jwtToken.services'
-import { resolve } from 'path';
 import { UsersServices } from '../users/users.service';
 
 @Injectable()
@@ -112,5 +112,9 @@ export class AuthService {
 
   remove(id: number) {
     return `This action removes a #${id} auth`;
+  }
+
+  async comparePasswords(plainTextPassword: string, hashedPassword: string): Promise<boolean> {
+    return bcrypt.compare(plainTextPassword, hashedPassword);
   }
 }

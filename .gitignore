@@ -1,6 +1,7 @@
 # Back part
 back/node_modules
 back/package-lock.json
+back/dist
 
 # Front part
 
