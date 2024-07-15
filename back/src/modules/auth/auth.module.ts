@@ -13,3 +13,4 @@ import { jwtTokenServices } from './jwtToken.services';
   providers: [AuthService, jwtTokenServices],
 })
 export class AuthModule {}
+DefaultDeserializer;
