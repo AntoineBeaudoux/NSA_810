@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Param, Delete, Res, Req, HttpStatus, HttpException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Res, Req, HttpStatus, HttpException, UseInterceptors } from '@nestjs/common';
 import { Response, Request } from 'express';
-import * as bcrypt from 'bcryptjs';
 
+import { LoggingInterceptor } from '../../logging.interceptor'
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { AuthService } from './auth.service';
@@ -12,6 +12,7 @@ import { UsersServices } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 
 @Controller('auth')
+@UseInterceptors(LoggingInterceptor)
 export class AuthController {
   constructor(
     private readonly authServices: AuthService,
