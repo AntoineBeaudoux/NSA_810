@@ -25,6 +25,8 @@ services:
     image: image_docker_backend
     ports:
       - 3000:3000
+    environment:
+      DB_HOST: 'create_bdd_container'
     networks:
       - backend
 
