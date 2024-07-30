@@ -1,100 +1,138 @@
-import { Controller, Get, Post, Body, Param, Delete, Res, Req, HttpStatus, HttpException, UseInterceptors } from '@nestjs/common';
-import { Response, Request } from 'express';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Res,
+  Req,
+  HttpStatus,
+  HttpException,
+  Logger,
+} from "@nestjs/common";
+import { Response, Request } from "express";
 
-import { LoggingInterceptor } from '../../logging.interceptor'
-import { LoginAuthDto } from './dto/login-auth.dto';
-import { RegisterAuthDto } from './dto/register-auth.dto';
-import { AuthService } from './auth.service';
+import { LoginAuthDto } from "./dto/login-auth.dto";
+import { RegisterAuthDto } from "./dto/register-auth.dto";
+import { AuthService } from "./auth.service";
 
-import { User } from '../users/entities/user.entity';
-import { Auth } from './entities/auth.entity';
-import { UsersServices } from '../users/users.service';
-import { CreateUserDto } from '../users/dto/create-user.dto';
+import { User } from "../users/entities/user.entity";
+import { ErrorMessagesCustom } from "src/common/error-message";
+import { UserService } from "../users/users.service";
+import { CreateUserDto } from "../users/dto/create-user.dto";
 
-@Controller('auth')
-@UseInterceptors(LoggingInterceptor)
+@Controller("auth")
 export class AuthController {
+  private logger = new Logger(AuthController.name);
   constructor(
-    private readonly authServices: AuthService,
-    private readonly usersServices: UsersServices
+    private readonly authService: AuthService,
+    private readonly userService: UserService
   ) {}
 
-  @Post('/login')
+  @Post("/login")
   async login(@Res() res: Response, @Body() loginAuthDto: LoginAuthDto) {
-    const userExisting: User = await this.usersServices.findOne(loginAuthDto.username);
+    try {
 
-    if (!userExisting) {
-      throw new HttpException('Invalid credentials.', HttpStatus.NOT_FOUND);
-    }
-
-    if (this.authServices.isLogged(userExisting.auth) === true) {
+      const userExisting: User = await this.userService.findOne(
+        loginAuthDto.username
+      );
+  
+      if (!userExisting) {
+        throw new Error(ErrorMessagesCustom.USER_NOT_FOUND);
+      }
+  
+      if (this.authService.isLogged(userExisting.auth) === true) {
+        return res.status(HttpStatus.OK).json({
+          message: "The user is already logged",
+        });
+      }
+  
+      const isPasswordValid = await this.authService.comparePasswords(
+        loginAuthDto.password,
+        userExisting.password
+      );
+      if (!isPasswordValid) {
+        throw new HttpException("Invalid credentials.", HttpStatus.UNAUTHORIZED);
+      }
+  
+      const auth = await this.authService.login(
+        userExisting.id,
+        userExisting.auth.id
+      );
+      userExisting.auth = auth;
+      await this.userService.update(userExisting.id, { auth });
       return res.status(HttpStatus.OK).json({
-        message: "The user is already logged"
+        message: "The user has logged in successfully",
+        token: userExisting.auth.jwtToken,
       });
     }
-
-    const isPasswordValid = await this.authServices.comparePasswords(loginAuthDto.password, userExisting.password);
-    if (!isPasswordValid) {
-      throw new HttpException('Invalid credentials.', HttpStatus.UNAUTHORIZED);
+    catch(error) {
+      throw new HttpException("Invalid credentials.", HttpStatus.NOT_FOUND);
     }
-
-    const auth = await this.authServices.login(userExisting.id, userExisting.auth.id);
-    userExisting.auth = auth;
-    await this.usersServices.update(userExisting.id, { auth });
-    return res.status(HttpStatus.OK).json({
-      message: "The user has logged in successfully",
-      token: userExisting.auth.jwtToken
-    });
   }
 
-  @Post('/register')
-  async register(@Res() res: Response, @Body() registerAuthDto: RegisterAuthDto) {
-    let user = await this.usersServices.findOne(registerAuthDto.username);
+  @Post("/register")
+  async register(
+    @Res() res: Response,
+    @Body() registerAuthDto: RegisterAuthDto
+  ) {
+    let user = await this.userService.findOne(registerAuthDto.username);
 
     if (user === null) {
-      user = await this.usersServices.create(registerAuthDto as CreateUserDto);
-      const auth = await this.authServices.create(user);
+      user = await this.userService.create(registerAuthDto as CreateUserDto);
+      const auth = await this.authService.create(user);
       user.auth = auth;
-      
-      await this.usersServices.update(user.id, { auth });
-      
+
+      await this.userService.update(user.id, { auth });
+
       return res.status(HttpStatus.OK).json({
         message: "The user has created and logged successfully",
-        token: user.auth.jwtToken
+        token: user.auth.jwtToken,
       });
     } else {
-      throw new HttpException('Username already exists', HttpStatus.CONFLICT);
+      this.logger.error("Username already exists");
+      throw new HttpException("Username already exists", HttpStatus.CONFLICT);
     }
   }
 
-  @Post('/logout')
-  async logout(@Req() req : Request, @Res() res: Response,) {
-    const token = this.authServices.extractTokenFromHeader(req);
-    const auth = await this.authServices.findByToken(token);
-    
-    if (auth) {
-      const authData: Partial<Auth> = {
-        isLogged: false,
-        jwtToken: ""
-      };
-      this.authServices.update(auth.id, authData);
+  @Post("/logout")
+  async logout(@Req() req: Request, @Res() res: Response) {
+    try {
+      const user = await this.authService.logout(req);
+
+      if (!user) this.logger.error("The user has been unable to logout");
       return res.status(HttpStatus.OK).json({
-        message: "The user has successfully logged out"
-      })
-    } else {
-      return res.status(HttpStatus.UNAUTHORIZED).json({
-        message: "Invalid or expired token"
-      })
+        message: "The user has successfully logged out",
+      });
+    } catch (error) {
+      this.logger.error(error.message);
+      switch (error.message) {
+        case ErrorMessagesCustom.HEADER_NOT_FOUND:
+          return res.status(HttpStatus.UNAUTHORIZED).json({
+            message: "Unauthorized. Please provide a valid token",
+          });
+
+        case ErrorMessagesCustom.TOKEN_NOT_FOUND:
+          return res.status(HttpStatus.UNAUTHORIZED).json({
+            message: "Unvalid token",
+          });
+
+        default:
+          return res.status(HttpStatus.UNAUTHORIZED).json({
+            message: "Invalid or expired token",
+          });
+      }
     }
   }
 
   @Get()
   findAll() {
-    return this.authServices.findAll();
+    return this.authService.findAll();
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authServices.remove(+id);
+  @Delete(":id")
+  remove(@Param("id") id: string) {
+    return this.authService.remove(+id);
   }
 }

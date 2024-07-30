@@ -5,12 +5,11 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { Auth } from './entities/auth.entity';
 import { UsersModule } from '../users/users.module';
-import { jwtTokenServices } from './jwtToken.services';
+import { jwtTokenService } from './jwtToken.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Auth]), UsersModule],
   controllers: [AuthController],
-  providers: [AuthService, jwtTokenServices],
+  providers: [AuthService, jwtTokenService],
 })
 export class AuthModule {}
-DefaultDeserializer;

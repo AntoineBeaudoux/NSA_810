@@ -5,7 +5,7 @@ interface JwtPayload {
   exp?: number;
 }
 
-export class jwtTokenServices {
+export class jwtTokenService {
   constructor(
     private secretAccess: string = process.env.JWT_SECRET_ACCESS,
     private accessExpire: string = "2h"

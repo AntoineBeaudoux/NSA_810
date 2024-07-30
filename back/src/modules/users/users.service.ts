@@ -7,25 +7,26 @@ import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import { Auth } from '../auth/entities/auth.entity';
+import { Auth } from '../auth/entities/auth.entity'; 
 
 @Injectable()
-export class UsersServices {
+export class UserService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
   ) {}
 
-  // PUBLIC FUNCTIONS
-
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
       createUserDto.password = await bcrypt.hash(createUserDto.password, 10);
       const user = this.usersRepository.create(createUserDto);
+      
+      if (!user) {
+        throw new Error("User wasn't created")
+      }
       await this.usersRepository.save(user);
       return user;
     } catch (error) {
-      console.error('Error creating user:', error);
       throw new HttpException('Could not create user.', HttpStatus.INTERNAL_SERVER_ERROR);
     }  
   }

@@ -1,13 +1,11 @@
 import { Controller, Get, Body, Patch, Param, Delete, UseInterceptors } from '@nestjs/common';
 
-import { LoggingInterceptor } from '../../logging.interceptor'
-import { UsersServices } from './users.service';
+import { UserService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('user')
-@UseInterceptors(LoggingInterceptor)
 export class UserController {
-  constructor(private readonly userService: UsersServices) {}
+  constructor(private readonly userService: UserService) {}
 
   @Get()
   findAll() {
