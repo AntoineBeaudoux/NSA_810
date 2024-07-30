@@ -2,6 +2,7 @@
 back/node_modules
 back/package-lock.json
 back/dist
+back/logs
 
 # Front part
 
