@@ -10,12 +10,14 @@ import {
   HttpStatus,
   HttpException,
   Logger,
+  UseGuards,
 } from "@nestjs/common";
 import { Response, Request } from "express";
 
 import { LoginAuthDto } from "./dto/login-auth.dto";
 import { RegisterAuthDto } from "./dto/register-auth.dto";
 import { AuthService } from "./auth.service";
+import { AuthGuard } from "src/common/auth.guard";
 
 import { User } from "../users/entities/user.entity";
 import { ErrorMessagesCustom } from "src/common/error-message";
@@ -33,29 +35,31 @@ export class AuthController {
   @Post("/login")
   async login(@Res() res: Response, @Body() loginAuthDto: LoginAuthDto) {
     try {
-
       const userExisting: User = await this.userService.findOne(
         loginAuthDto.username
       );
-  
+
       if (!userExisting) {
         throw new Error(ErrorMessagesCustom.USER_NOT_FOUND);
       }
-  
+
       if (this.authService.isLogged(userExisting.auth) === true) {
         return res.status(HttpStatus.OK).json({
           message: "The user is already logged",
         });
       }
-  
+
       const isPasswordValid = await this.authService.comparePasswords(
         loginAuthDto.password,
         userExisting.password
       );
       if (!isPasswordValid) {
-        throw new HttpException("Invalid credentials.", HttpStatus.UNAUTHORIZED);
+        throw new HttpException(
+          "Invalid credentials.",
+          HttpStatus.UNAUTHORIZED
+        );
       }
-  
+
       const auth = await this.authService.login(
         userExisting.id,
         userExisting.auth.id
@@ -66,8 +70,7 @@ export class AuthController {
         message: "The user has logged in successfully",
         token: userExisting.auth.jwtToken,
       });
-    }
-    catch(error) {
+    } catch (error) {
       throw new HttpException("Invalid credentials.", HttpStatus.NOT_FOUND);
     }
   }
@@ -96,6 +99,7 @@ export class AuthController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Post("/logout")
   async logout(@Req() req: Request, @Res() res: Response) {
     try {
@@ -108,11 +112,6 @@ export class AuthController {
     } catch (error) {
       this.logger.error(error.message);
       switch (error.message) {
-        case ErrorMessagesCustom.HEADER_NOT_FOUND:
-          return res.status(HttpStatus.UNAUTHORIZED).json({
-            message: "Unauthorized. Please provide a valid token",
-          });
-
         case ErrorMessagesCustom.TOKEN_NOT_FOUND:
           return res.status(HttpStatus.UNAUTHORIZED).json({
             message: "Unvalid token",
@@ -124,15 +123,5 @@ export class AuthController {
           });
       }
     }
-  }
-
-  @Get()
-  findAll() {
-    return this.authService.findAll();
-  }
-
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.authService.remove(+id);
   }
 }

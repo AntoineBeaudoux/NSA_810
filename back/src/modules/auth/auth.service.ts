@@ -7,8 +7,7 @@ import * as bcrypt from "bcryptjs";
 import { ErrorMessagesCustom } from "src/common/error-message";
 import { Auth } from "./entities/auth.entity";
 import { User } from "../users/entities/user.entity";
-import { jwtTokenService } from "./jwtToken.service";
-import { UserService } from "../users/users.service";
+import { JwtTokenService } from "./jwtToken.service";
 
 @Injectable()
 export class AuthService {
@@ -16,7 +15,7 @@ export class AuthService {
   constructor(
     @InjectRepository(Auth)
     private authRepository: Repository<Auth>,
-    private jwtTokenService: jwtTokenService
+    private jwtTokenService: JwtTokenService
   ) {}
 
   extractTokenFromHeader(request: Request) {
@@ -107,14 +106,6 @@ export class AuthService {
     if (auth.isLogged === true && auth.jwtToken !== null) {
       return true;
     } else return false;
-  }
-
-  findAll() {
-    return `This action returns all auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
   }
 
   async comparePasswords(

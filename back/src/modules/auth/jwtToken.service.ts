@@ -5,7 +5,7 @@ interface JwtPayload {
   exp?: number;
 }
 
-export class jwtTokenService {
+export class JwtTokenService {
   constructor(
     private secretAccess: string = process.env.JWT_SECRET_ACCESS,
     private accessExpire: string = "2h"
@@ -26,7 +26,7 @@ export class jwtTokenService {
     }
     try {
       const jwtToken = jwt.verify(token, this.secretAccess) as JwtPayload;
-  
+
       if (this.validateTime(jwtToken) === false) {
         throw new Error("JWT_SECRET_ACCESS is not valid");
       }
@@ -37,7 +37,7 @@ export class jwtTokenService {
   }
 
   validateTime(token: JwtPayload): boolean {
-    if (!token || typeof token.exp !== 'number') {
+    if (!token || typeof token.exp !== "number") {
       return false;
     }
     const currentTime = Date.now() / 1000;
