@@ -13,7 +13,7 @@ function App() {
             path="/"
             element={
               <div>
-                <h1>Bienvenue sur l'application React</h1>
+                <h1>SAlut React</h1>
                 <p>
                   Utilisez les liens pour naviguer vers les différentes pages.
                 </p>
